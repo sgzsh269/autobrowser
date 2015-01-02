@@ -10,8 +10,8 @@ Dependencies
 
 - Web browser (preferably Firefox)
 - Python 2.7
-- Python module: Tornado
-- Python module: Selenium
+- Tornado
+- Selenium
 
 
 Features

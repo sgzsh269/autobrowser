@@ -27,9 +27,9 @@ setup(
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: MIT License"
+        "License :: OSI Approved :: MIT License",
         "Programming Language :: Python",
-        "Programming Language :: Python:: 2.7"
+        "Programming Language :: Python :: 2.7",
     ],
     install_requires = install_requires,
 )
