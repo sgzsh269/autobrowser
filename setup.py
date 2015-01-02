@@ -21,7 +21,7 @@ setup(
     description = ("Toolset for automated browsing"),
     license = "MIT",
     keywords = "automation web browser",
-    url = "http://packages.python.org/autobrowser",
+    url = "https://github.com/sgzsh269/autobrowser",
     packages=["autobrowser"],
     long_description=read("README.rst"),
     classifiers=[
