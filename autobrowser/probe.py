@@ -1,48 +1,60 @@
 import os
 import socket
 import re
-from flask import Flask, make_response, request
+import json
+import traceback
+import logging
+import tornado.ioloop
+import tornado.websocket
+import tornado.web
+import tornado.httpserver
 from selenium import webdriver
-from OpenSSL import SSL
 
-_REPORT_JS = open(os.path.join(os.path.dirname(__file__), "reporter.js"))
-_PROBE = None
-_LISTENER = Flask(__name__)
-_ACTIVITY_OUTPUT_FILE = None
+_report_js = open(os.path.join(os.path.dirname(__file__), "reporter.js"))
+_probe = None
+_activity_output_file = None
+
+_logger = logging.getLogger("autobrowser.probe")
+_logger.setLevel(logging.INFO)
+_logger.propagate = False
+_handler = logging.StreamHandler()
+_handler.setFormatter(logging.Formatter("%(message)s"))
+_logger.addHandler(_handler)
 
 class Probe():
 
     """
     This class helps to probe the webpage by identifying HTML elements of
-    interest on user click event. It saves the elements of interest in the
+    interest on user mousedown event, in particular it identifies the css
+    location of the element which can then be used by a css selector to
+    retrieve the element. It saves the elements of interest in the
     'activity_output_file' provided.
 
     It relies on:-
     1. selenium webdriver - to start web browser and embed 'reporter.js'
     2. reporter.js - js file to catch user click events on HTML element of
     interest and report them back to Probe
-    3. Flask webserver - listener for the user click events reported by
+    3. Tornado webserver - listener for the user click events reported by
     reporter.js
     """
 
     def __init__(self, selenium_webdriver, ssl_privatekey_file,
                  ssl_certificate_file, activity_output_file):
-        global _PROBE
-        global _ACTIVITY_OUTPUT_FILE
+        global _probe
+        global _activity_output_file
 
-        self._ssl_context = SSL.Context(SSL.TLSv1_2_METHOD)
-        self._ssl_context.use_privatekey_file(ssl_privatekey_file)
-        self._ssl_context.use_certificate_file(ssl_certificate_file)
+        self.ssl_certificate_file = ssl_certificate_file
+        self.ssl_privatekey_file = ssl_privatekey_file
         self.webdriver = selenium_webdriver
         self.activity_output_file = activity_output_file
         self._report_js = None
 
-        _ACTIVITY_OUTPUT_FILE = open(activity_output_file, "w")
-        _ACTIVITY_OUTPUT_FILE.write("event^datetime^elem_location^elem_id^"
+        _activity_output_file = open(activity_output_file, "w")
+        _activity_output_file.write("event^datetime^elem_location^elem_id^"
                                     "elem_tagName^elem_className^"
-                                    "elem_innerHTML^elem_locator\n")
-        _ACTIVITY_OUTPUT_FILE.flush()
-        _PROBE = self
+                                    "elem_innerHTML^css_location\n")
+        _activity_output_file.flush()
+        _probe = self
 
     def _get_random_open_port(self):
         sock = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
@@ -53,7 +65,7 @@ class Probe():
 
     def _read_report_js(self, port):
         report_js = ""
-        for l in _REPORT_JS:
+        for l in _report_js:
             replaced = re.sub("%port%", str(port), l)
             report_js += replaced
         return report_js
@@ -64,34 +76,52 @@ class Probe():
     def start(self):
         port = self._get_random_open_port()
         self._report_js = self._read_report_js(port)
+        ssl_options = {
+            "certfile": self.ssl_certificate_file,
+            "keyfile": self.ssl_privatekey_file
+        }
+        _listener = tornado.web.Application([(r"/", ListenerHandler)])
+        _http_server = tornado.httpserver.HTTPServer(_listener,
+                                                    ssl_options = ssl_options)
+        _http_server.listen(port)
         self._exec_report_js()
-        _LISTENER.run(port = port, ssl_context = self._ssl_context)
+        tornado.ioloop.IOLoop.instance().start()
 
-@_LISTENER.route("/")
-def _report():
-    event = request.args.get("event")
-    if event == "click":
-        datetime = request.args.get("datetime")
-        elem_location = request.args.get("elem_location")
-        elem_id = request.args.get("elem_id")
-        elem_tagName = request.args.get("elem_tagName")
-        elem_className = request.args.get("elem_className")
-        elem_innerHTML = request.args.get("elem_innerHTML")
-        elem_locator = request.args.get("elem_locator")
-        elem_signature = "{0}^{1}^{2}^{3}^{4}^{5}^{6}^{7}".format(
+class ListenerHandler(tornado.websocket.WebSocketHandler):
+    def open(self):
+        self.current_url = _probe.webdriver.current_url
+        _logger.info("Probe READY on {0}".format(_probe.webdriver.current_url))
+
+    def on_message(self, message):
+        try:
+            msgObj = json.loads(message)
+            event = msgObj["event"]
+            _logger.info(u"Probe EVENT received: {0}".format(message))
+            if event == "mousedown":
+                datetime = msgObj["datetime"]
+                elem_location = msgObj["elem_location"]
+                elem_id = msgObj["elem_id"]
+                elem_tagName = msgObj["elem_tagName"]
+                elem_className = msgObj["elem_className"]
+                elem_innerHTML = msgObj["elem_innerHTML"]
+                css_location = msgObj["css_location"]
+                elem_signature = u"{0}^{1}^{2}^{3}^{4}^{5}^{6}^{7}\n".format(
                                                 event, datetime,
                                                 elem_location, elem_id,
                                                 elem_tagName, elem_className,
-                                                elem_innerHTML, elem_locator)
+                                        elem_innerHTML, css_location)
 
-        _ACTIVITY_OUTPUT_FILE.write("{0}\n".format(elem_signature))
-        _ACTIVITY_OUTPUT_FILE.flush()
+                _activity_output_file.write(elem_signature.encode("utf-8"))
+                _activity_output_file.flush()
 
-    elif event == "unload":
-        _PROBE.webdriver.current_url
-        _PROBE._exec_report_js()
+        except Exception:
+            _logger.info(traceback.format_exc())
 
-    response = make_response("")
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    return response
+    def on_close(self):
+        _probe.webdriver.current_url
+        _probe._exec_report_js()
+        _logger.info("Probe CLOSED on {0}".format(self.current_url))
+
+    def check_origin(self, origin):
+        return True
 

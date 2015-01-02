@@ -2,12 +2,13 @@ import os
 from setuptools import setup
 
 def read(file_name):
-    return open(os.path.join(os.path.dirname(__file__), file_name)).read()
+    with open(os.path.join(os.path.dirname(__file__), file_name), "r",
+              "utf-8") as f:
+        return f.read()
 
 install_requires = [
-    "flask",
+    "tornado",
     "selenium",
-    "OpenSSL"
 ]
 
 setup(

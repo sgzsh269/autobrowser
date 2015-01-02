@@ -2,34 +2,32 @@
 
 var port = %port%;
 
-var local_probe = new XMLHttpRequest();
+var local_probe = new WebSocket("wss://localhost:" + port);
 
-var send = function(queryString){
-    local_probe.open("GET", "https://localhost:" + port + "?" + queryString,
-    true);
-    local_probe.send();
+var send = function(msg){
+    var json = JSON.stringify(msg);
+    local_probe.send(json);
 }
 
-window.addEventListener("unload", function(event){
-send("event=unload");
-
+document.addEventListener("mousedown", function(event){
+    reportElem(event);
 });
 
-document.addEventListener("click", function(event){
+var reportElem = function(event){
     var elem = event.target;
     var path = buildPath(elem);
     var date = new Date();
-    var queryString = "";
-    queryString += "event=" + "click" + "&";
-    queryString += "datetime=" + date.toISOString() + "&";
-    queryString += "elem_location=" + window.location.hostname + window.location.pathname + "&";
-    queryString += "elem_id=" + elem.id + "&";
-    queryString += "elem_tagName=" + elem.tagName + "&";
-    queryString += "elem_className=" + elem.className + "&";
-    queryString += "elem_innerHTML=" + elem.innerHTML + "&";
-    queryString += "elem_locator=" + path;
-    send(queryString);
-});
+    var msg = {};
+    msg.event = event.type;
+    msg.datetime = date.toISOString();
+    msg.elem_location = window.location.hostname + window.location.pathname;
+    msg.elem_id = elem.id
+    msg.elem_tagName = elem.tagName;
+    msg.elem_className = elem.className;
+    msg.elem_innerHTML = elem.innerHTML;
+    msg.css_location = path;
+    send(msg);
+};
 
 var buildPath = function(target){
     var path = "";
