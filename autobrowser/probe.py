@@ -21,8 +21,8 @@ _handler = logging.StreamHandler()
 _handler.setFormatter(logging.Formatter("%(message)s"))
 _logger.addHandler(_handler)
 
-class Probe():
 
+class Probe():
     """
     This class helps to probe the webpage by identifying HTML elements of
     interest on user mousedown event, in particular it identifies the css
@@ -50,14 +50,16 @@ class Probe():
         self._report_js = None
 
         _activity_output_file = open(activity_output_file, "w")
-        _activity_output_file.write("event^datetime^elem_location^elem_id^"
-                                    "elem_tagName^elem_className^"
-                                    "elem_innerHTML^css_location\n")
+        _activity_output_file.write(
+                        "event^datetime^elem_location^elem_id^"
+                        "elem_tagName^elem_className^"
+                        "elem_innerHTML^css_location\n"
+                    )
         _activity_output_file.flush()
         _probe = self
 
     def _get_random_open_port(self):
-        sock = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(("", 0))
         port = sock.getsockname()[1]
         sock.close()
@@ -81,13 +83,17 @@ class Probe():
             "keyfile": self.ssl_privatekey_file
         }
         _listener = tornado.web.Application([(r"/", ListenerHandler)])
-        _http_server = tornado.httpserver.HTTPServer(_listener,
-                                                    ssl_options = ssl_options)
+        _http_server = tornado.httpserver.HTTPServer(
+                                                _listener,
+                                                ssl_options = ssl_options
+                                            )
         _http_server.listen(port)
         self._exec_report_js()
         tornado.ioloop.IOLoop.instance().start()
 
+
 class ListenerHandler(tornado.websocket.WebSocketHandler):
+
     def open(self):
         self.current_url = _probe.webdriver.current_url
         _logger.info("Probe READY on {0}".format(_probe.webdriver.current_url))
@@ -106,10 +112,15 @@ class ListenerHandler(tornado.websocket.WebSocketHandler):
                 elem_innerHTML = msgObj["elem_innerHTML"]
                 css_location = msgObj["css_location"]
                 elem_signature = u"{0}^{1}^{2}^{3}^{4}^{5}^{6}^{7}\n".format(
-                                                event, datetime,
-                                                elem_location, elem_id,
-                                                elem_tagName, elem_className,
-                                        elem_innerHTML, css_location)
+                                                event,
+                                                datetime,
+                                                elem_location,
+                                                elem_id,
+                                                elem_tagName,
+                                                elem_className,
+                                                elem_innerHTML,
+                                                css_location
+                                            )
 
                 _activity_output_file.write(elem_signature.encode("utf-8"))
                 _activity_output_file.flush()

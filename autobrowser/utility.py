@@ -3,14 +3,14 @@ from threading import Timer
 from multiprocessing import Pool
 
 
-def read_secret(prompt_message = "Enter password/code/secret to be used in "
-                             "application:\n"):
+def read_secret(
+        prompt_message = "Enter password/code/secret:\n"
+    ):
 
     secret = getpass.getpass(prompt_message)
     return secret
 
 class FunctionRunner():
-
     """
     A container for running a function repeatedly.
     There are 2 features offered for repeated execution:-
@@ -49,7 +49,6 @@ class FunctionRunner():
             self.settings[k] = settings[k]
 
     def _repeat_func_sequential(self, delay):
-
         """
         Private helper method to repeatedly call given function argument
         sequentially after 'delay' seconds. The function calls are blocking
@@ -62,7 +61,6 @@ class FunctionRunner():
         Timer(delay, self._repeat_func_sequential, (delay,)).start()
 
     def _repeat_func_periodic(self, delay):
-
         """
         Private helper method to call given function argument every
         'delay' seconds. The function calls are non-blocking independent
