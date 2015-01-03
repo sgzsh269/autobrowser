@@ -82,7 +82,7 @@ class Probe():
             "certfile": self.ssl_certificate_file,
             "keyfile": self.ssl_privatekey_file
         }
-        _listener = tornado.web.Application([(r"/", ListenerHandler)])
+        _listener = tornado.web.Application([(r"/", _ListenerHandler)])
         _http_server = tornado.httpserver.HTTPServer(
                                                 _listener,
                                                 ssl_options = ssl_options
@@ -92,7 +92,7 @@ class Probe():
         tornado.ioloop.IOLoop.instance().start()
 
 
-class ListenerHandler(tornado.websocket.WebSocketHandler):
+class _ListenerHandler(tornado.websocket.WebSocketHandler):
 
     def open(self):
         self.current_url = _probe.webdriver.current_url

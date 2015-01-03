@@ -1,5 +1,6 @@
 import os
 from setuptools import setup
+import autobrowser
 
 
 def read(file_name):
@@ -15,7 +16,7 @@ install_requires = [
 
 setup(
     name = "autobrowser",
-    version = "0.1.0",
+    version = autobrowser.__version__,
     author = "Sagar Nilesh Shah",
     author_email = "shah.sagar.nilesh@gmail.com",
     description = ("Toolset for automated browsing"),
