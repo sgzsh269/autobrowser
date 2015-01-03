@@ -1,4 +1,4 @@
 
-autobrowser.egg-info/*
-dist/*
+autobrowser.egg-info
+dist
 *.pyc
