@@ -71,10 +71,6 @@ Usage
     from selenium import webdriver
     from selenium.webdriver.common.keys import Keys
 
-    settings = dict()
-    settings["repeat_feature"] = utility.FunctionRunner.REPEAT_SEQ
-    settings["repeat_delay"] = 10
-
     wd = webdriver.Firefox()
 
     def foo():
@@ -86,7 +82,11 @@ Usage
         elem.send_keys("cricket")
         elem.send_keys(Keys.RETURN)
 
-    utility.FunctionRunner(foo, settings = settings).start()
+    # For running repeatedly in sequential manner with 'delay' seconds
+    utility.FunctionRunner(foo).repeat_sequential(60)
+
+    # For running repeatedly in periodic manner every 'delay' seconds
+    # utility.FunctionRunner(foo).repeat_periodic(60)
 
 
 License
