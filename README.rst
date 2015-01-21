@@ -82,11 +82,13 @@ Usage
         elem.send_keys("cricket")
         elem.send_keys(Keys.RETURN)
 
-    # For running repeatedly in sequential manner with 'delay' seconds
+    # For running repeatedly in sequential manner with '60' seconds delay
     utility.FunctionRunner(foo).repeat_sequential(60)
 
-    # For running repeatedly in periodic manner every 'delay' seconds
-    # utility.FunctionRunner(foo).repeat_periodic(60)
+    # For running repeatedly in periodic manner every '15' seconds
+    # with 5 processes
+    #
+    # utility.FunctionRunner(foo).repeat_periodic(15, 5)
 
 
 License

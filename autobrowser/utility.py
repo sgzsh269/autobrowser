@@ -19,21 +19,21 @@ class FunctionRunner():
 
     eg.
     FunctionRunner(fn,("optional fn args tuple").repeat_periodic(5)
-    FunctionRunner(fn,("optional fn args tuple").repeat_sequential(5)
+    FunctionRunner(fn,("optional fn args tuple").repeat_sequential(5, 4)
     """
 
     def __init__(self, func, args = ()):
 
-        self.func = func
-        self.args = args
+        self._func = func
+        self._args = args
 
     def _repeat_func_sequential(self):
-        self.func(*self.args)
-        Timer(self.delay, self._repeat_func_sequential).start()
+        self._func(*self._args)
+        Timer(self._delay, self._repeat_func_sequential).start()
 
     def _repeat_func_periodic(self):
-        self.pool.apply_async(self.func, self.args)
-        Timer(self.delay, self._repeat_func_periodic).start()
+        self._pool.apply_async(self._func, self._args)
+        Timer(self._delay, self._repeat_func_periodic).start()
 
     def repeat_periodic(self, delay, num_processes = 3):
         """
@@ -45,8 +45,8 @@ class FunctionRunner():
         :param delay
         """
 
-        self.pool = Pool(num_processes)
-        self.delay = delay
+        self._pool = Pool(num_processes)
+        self._delay = delay
         self._repeat_func_periodic()
 
     def repeat_sequential(self, delay):
@@ -58,5 +58,5 @@ class FunctionRunner():
         :param delay
         """
 
-        self.delay = delay
+        self._delay = delay
         self._repeat_func_sequential()
